@@ -58,7 +58,7 @@ class FoodAgent:
                 "type": "function",
                 "function": {
                     "name": "search_web",
-                    "description": "STRICT LIMITATION: Query the local PRODUCTION or FARMING status of only ONE specific food item at a time. Trigger this tool when the user asks about the origin, local farming, harvest, or availability of locally grown produce in a specific location (e.g., 'Is this grown in HK?', 'Local farms for...'). Even if multiple items are mentioned, extract only the most relevant one.",
+                    "description": "STRICT LIMITATION: Query the PRODUCTION or FARMING status of only ONE specific food item at a time. Trigger this tool when the user asks about the origin, local farming, harvest, or availability of locally grown produce in a specific location (e.g., 'Is this grown in HK?', 'Local farms for...'). Even if multiple items are mentioned, extract only the most relevant one.",
                     "parameters": {
                         "type": "object",
                         "properties": {

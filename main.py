@@ -4,6 +4,7 @@ from agent.food_agent import FoodAgent
 
 
 # ================== 工具函数 ==================
+
 def encode_image_to_base64(uploaded_file):
     if uploaded_file is not None:
         return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
@@ -117,7 +118,7 @@ if send_button and (user_input or uploaded_file):
         else:
             raw_content = response.message.content if hasattr(response, 'message') else str(response)
             if '{"' in raw_content:
-                ai_content = "💬 Processing your request..."
+                ai_content = "💬 Processing your request...Ask again or clear all"
             else:
                 ai_content = raw_content if raw_content.strip() else "I'm here to help!"
 
