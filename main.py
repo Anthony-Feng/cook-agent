@@ -86,15 +86,6 @@ if __name__ == "__main__":
         # 同步状态
         if uploaded_file:
             st.session_state.persistent_image = uploaded_file
-
-    with col0_inner2:
-        # 3. 点击清空时，让计数器自增
-        if st.button("Clear Image"):
-            st.session_state.persistent_image = None
-            # 关键：改变 key 值，迫使 Streamlit 重新渲染一个空的 uploader
-            st.session_state.uploader_key += 1
-            st.rerun()
-
     # ----------------------
     # 输入框&Send&Clear
     # ----------------------
@@ -118,7 +109,6 @@ if __name__ == "__main__":
     # ----------------------
     # 发送按钮逻辑
     # ----------------------
-    #if send_button and (user_input or uploaded_file):
     if send_button and (user_input or uploaded_file):
         #=======================================
         image_base64 = None

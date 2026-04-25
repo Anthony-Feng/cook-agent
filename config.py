@@ -1,0 +1,1 @@
+MODEL_SELECT = "llama3.1:8b-instruct-q5_K_M"

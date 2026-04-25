@@ -1,9 +1,9 @@
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 import trafilatura
 import ollama
-
+from config import MODEL_SELECT
 # ================== 工具1：菜谱生成 ==================
-def recommend_recipe(self, ingredients):
+def recommend_recipe(ingredients):
     # print('ingredients',ingredients)
     # print(f"🍲 正在搜索组合菜谱: {ingredients}...\n")
     try:
@@ -21,7 +21,7 @@ def recommend_recipe(self, ingredients):
         downloaded = trafilatura.fetch_url(url)
         # 提取正文（过滤广告、导航）
         text = trafilatura.extract(downloaded)
-        # print('url main text',text)
+        #print('url main text',text)
     except Exception as e:
         print(f"search wrong: {e}")
     messages = [
@@ -75,5 +75,5 @@ def recommend_recipe(self, ingredients):
         }
         # {"role": "user", "content": ingredients}
     ]
-    res = ollama.chat(model=self.model_select, messages=messages)
+    res = ollama.chat(model=MODEL_SELECT, messages=messages)
     return res.message.content

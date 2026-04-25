@@ -1,10 +1,10 @@
 import requests
 import json
 import ollama
-
+from config import MODEL_SELECT
 
 # ================== 工具2：卡路里计算 ==================
-def calculate_calories(self, recipe_text):
+def calculate_calories(recipe_text):
     api_key = "bTXJdDVjjDAFpuyGdzFVKvd2cb1nSH2HFanmM6Ou"
     url = f'https://api.api-ninjas.com/v1/nutrition?query={recipe_text}'
 
@@ -55,5 +55,5 @@ def calculate_calories(self, recipe_text):
             [1-sentence professional insight]
             """
 
-    res = ollama.chat(model=self.model_select, messages=[{"role": "user", "content": prompt}])
+    res = ollama.chat(model=MODEL_SELECT, messages=[{"role": "user", "content": prompt}])
     return res.message.content

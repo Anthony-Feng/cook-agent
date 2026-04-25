@@ -1,9 +1,9 @@
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 import ollama
-
+from config import MODEL_SELECT
 
 # ================== 工具3：搜索工具函数 ==================
-def search_web(self, query):
+def search_web(query):
     """
     使用 DuckDuckGo 搜索网络信息 + LLM 整理：只提取食物名称与对应价格
     """
@@ -38,7 +38,7 @@ def search_web(self, query):
         """
 
         res = ollama.chat(
-            model=self.model_select,
+            model=MODEL_SELECT,
             messages=[{"role": "user", "content": prompt}]
         )
         return res.message.content.strip()

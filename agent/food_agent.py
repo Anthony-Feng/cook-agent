@@ -1,11 +1,10 @@
 import ollama
 from tools import recommend_recipe, calculate_calories, search_web, analyze_image_contents
-
+from config import MODEL_SELECT
 class FoodAgent:
     def __init__(self):
         # ================== 模型配置 ==================
-        #self.model_select = "llama3.2:1b-instruct-q4_0"
-        self.model_select = "llama3.1:8b-instruct-q5_K_M"
+        self.model_select = MODEL_SELECT
         # ================== 【短期记忆核心】对话历史 ==================
         self.messages = [
             {
@@ -85,70 +84,66 @@ class FoodAgent:
             }
         ]
 
-
-
-
-
-
     # ==================agent_core 核心：带记忆的对话 ==================
-    def chat(self, user_input, image_base64=None):  # 把参数名改为
-        if image_base64 :
+    def chat(self, user_input, image_base64=None):
+        if image_base64:
             self.current_image_base64 = image_base64
-            # 给用户的输入加上一个显式的【系统标记】
-            # 这就像是对 AI 眨了下眼，提示它去调用工具
             contextual_input = user_input + "\n(System: The user has uploaded an image. )"
         else:
             contextual_input = user_input + "\n(no image. )"
-        #print(contextual_input)
+
         self.messages.append({"role": "user", "content": contextual_input})
 
-        # 3. 让 Llama 决定调用工具
+        # 1. 第一次请求：让 Llama 决定是否调用工具
         response = ollama.chat(
             model=self.model_select,
             messages=self.messages,
             tools=self.tools,
         )
 
-        tool_results = []
-        # 4. 执行工具
-        if response.message.tool_calls:
-            if len(response.message.tool_calls) > 0:
-                for tool_call in response.message.tool_calls:
-                    print('tool_call',tool_call)
-                    func_name = tool_call.function.name
-                    args = tool_call.function.arguments
-
-                    if func_name == "recommend_recipe":
-                        res = recommend_recipe(**args)
-                        tool_results.append(("recipe", res))
-
-                    elif func_name == "calculate_calories":
-                        res = calculate_calories(**args)
-                        tool_results.append(("calories", res))
-
-                    elif func_name == "search_web":
-                        res = search_web(**args)
-                        tool_results.append(("web", res))
-                        # --- 核心改进：解决你说的“随便答”问题 ---
-                        # 如果 LLM 想调工具，但它给的工具名（如 create_limerick）不在上面那三个里面
-                        # 那么 tool_results 此时就是空的。
-                    elif func_name == "analyze_image_contents":
-                        # 这里的 self.analyze_image_contents 会调用视觉模型并返回 "I have..."
-                        res = analyze_image_contents(self)
-                        tool_results.append(("vision", res))
-                if not tool_results:
-                    # 默默删掉刚才那个错误的工具意图，不让它污染记忆
-                    # 重新请求，这次完全不传 tools 参数，强迫它“随便答”
-                    fallback_response = ollama.chat(
-                        model=self.model_select,
-                        messages=self.messages
-                    )
-                    self.messages.append(fallback_response.message)
-                    return fallback_response, []
-            # 4. 如果 LLM 本来就没想调工具 (len == 0)
-        else:
-            # 直接保存并返回普通对话
+        # 情况 A：模型不想调工具，直接回复
+        if not response.message.tool_calls:
             self.messages.append(response.message)
             return response, []
 
-        return response, tool_results
+        # 情况 B：模型想调工具
+        # --- 关键修改 1：必须把 AI 的调用意图存入历史 ---
+        self.messages.append(response.message)
+
+        tool_results = []
+        for tool_call in response.message.tool_calls:
+            func_name = tool_call.function.name
+            args = tool_call.function.arguments
+            print(func_name,args)
+            # 执行工具逻辑
+            res = None
+            if func_name == "recommend_recipe":
+                res = recommend_recipe(**args)  # 注意：这里建议去掉 self，除非你内部真的需要
+                tool_results.append(("recipe", res))
+            elif func_name == "calculate_calories":
+                res = calculate_calories(**args)
+                tool_results.append(("calories", res))
+            elif func_name == "search_web":
+                res = search_web(**args)
+                tool_results.append(("web", res))
+            elif func_name == "analyze_image_contents":
+                res = analyze_image_contents(self)  # 视觉通常需要 self 里的 base64
+                tool_results.append(("vision", res))
+
+            # --- 关键修改 2：必须把工具结果【反馈回消息历史】 ---
+            if res:
+                self.messages.append({
+                    "role": "tool",
+                    "content": str(res),
+                    "name": func_name
+                })
+
+        # --- 关键修改 3：再次调用模型，让它根据工具结果生成最终回复 ---
+        final_response = ollama.chat(
+            model=self.model_select,
+            messages=self.messages,
+        )
+
+        # 将最终的人类语言回复存入记忆
+        self.messages.append(final_response.message)
+        return final_response, tool_results
